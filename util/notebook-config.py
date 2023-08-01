@@ -40,7 +40,7 @@ import os
 if config['model_id'] == 'openai':
   os.environ['OPENAI_API_KEY'] = 'xxxxxxxx'
 
-if "LLAMA-2" in config['model_id']:
+if "Llama-2" in config['model_id']:
   config['HUGGING_FACE_HUB_TOKEN'] = 'xxxxxxxx'
 
 # COMMAND ----------

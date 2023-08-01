@@ -5,6 +5,10 @@
 
 # COMMAND ----------
 
+# MAGIC %run "./util/notebook-config"
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC **This notebook is not required if you want to run the OpenAI model**
 
@@ -57,11 +61,9 @@ if config['model_id'] == "openai":
 
 # COMMAND ----------
 
- dbutils.library.restartPython() 
+ #dbutils.library.restartPython() 
 
-# COMMAND ----------
 
-# MAGIC %run "./util/notebook-config"
 
 # COMMAND ----------
 
