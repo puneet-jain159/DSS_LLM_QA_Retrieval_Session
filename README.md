@@ -4,6 +4,11 @@ To get started please change the configuration notebook in **util/notebook-confi
 
 Please look at the documentation Below on configuration for specific LLM's
 
+Please change the **util/notebook-config.py** to point to the location where your files are stored.
+```
+config['loc']  = <"Location where the files are stored">
+```
+
 ## LLM's Supported
 Currently the code supports the following version 
 - [Open AI](#runnig-the-code-using-open-ai)
