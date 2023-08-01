@@ -76,15 +76,6 @@ chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt])
 
 if config['model_id']  == 'openai':
 
-  # define system-level instructions
-  system_message_prompt = SystemMessagePromptTemplate.from_template(config['system_message_template'])
-
-  # define human-driven instructions
-  human_message_prompt = HumanMessagePromptTemplate.from_template(config['human_message_template'])
-
-  # combine instructions into a single prompt
-  chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
-
   # define model to respond to prompt
   llm = ChatOpenAI(model_name=config['openai_chat_model'], temperature=config['temperature'])
 
