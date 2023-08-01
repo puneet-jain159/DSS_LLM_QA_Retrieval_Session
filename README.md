@@ -1,6 +1,6 @@
 # DIY QA LLM BOT
-This a repo to create a QA Retrieval Bot using both Open LLM as well as OpenAI in Databricks.\n
-To get started please change the configuration notebook in util/notebook-config.py. 
+This a repo to create a QA Retrieval Bot using both Open LLM as well as OpenAI in Databricks.\
+To get started please change the configuration notebook in **util/notebook-config.py**. 
 
 Please look at the documentation Below on configuration for specific LLM's
 
