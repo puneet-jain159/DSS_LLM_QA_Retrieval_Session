@@ -1,8 +1,15 @@
 # DIY QA LLM BOT
-This a repo to create a QA Retrieval Bot using both Open LLM as well as OpenAI in Databricks.
+This a repo to create a QA Retrieval Bot using both Open LLM as well as OpenAI in Databricks.</br>
 To get started please change the configuration notebook in util/notebook-config.py. 
 
 Please look at the documentation Below on configuration for specific LLM's
+
+## LLM's Supported
+Currently the code supports the following version 
+- [Open AI](#runnig-the-code-using-open-ai)
+- [MPT-30b Chat version](#runnig-the-code-using-mosiac-mpt-models)
+- [Llama-2-13b HF-chat version](#runnig-the-code-using-llama-2-models)
+- [Llama-2-7-b HF-chat version with 8-bit Quantization](#runnig-the-code-using-llama-2-models)
 
 ## Runtime Tested
 The following code is tested on ML DBR GPU 13.2 Runtime
@@ -11,13 +18,6 @@ The following code is tested on ML DBR GPU 13.2 Runtime
 It Code to run open LLMS has been tested on the below single node cluster configurations:
 - AWS : g5-12xlarge
 - Azure : NC24Ads_A100_v4
-
-## LLM's Supported
-Currently the code supports the following version 
-- [Open AI](#runnig-the-code-using-open-ai)
-- MPT-30b Chat version 
-- Llama-2-13b HF-chat version
-- Llama-2-7-b HF-chat version with 8-bit Quantization
 
 ## Coverting PDF to txt
 There are two ways to convert the PDF to TXT
