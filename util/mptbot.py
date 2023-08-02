@@ -16,7 +16,7 @@ IP = 'localhost'
 PORT = '8880'
 
 
-
++"""Wrapper around HuggingFace Pipeline """
 class HuggingFacePipelineLocal(LLM):
 
     pipeline: Any  #: :meta private:
@@ -245,6 +245,7 @@ class HuggingFacePipelineLocal(LLM):
         return generated_text
       
 
++"""Wrapper around Text Generation Inference APIs."""
 
 class TGILocalPipeline(LLM):
     pipeline: Any  #: :meta private:

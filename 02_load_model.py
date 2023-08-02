@@ -49,7 +49,7 @@ if config['model_id'] == "openai":
 # MAGIC
 # MAGIC # install text-generation-inference
 # MAGIC rm -rf  /local_disk0/tmp/text-generation-inference
-# MAGIC cd /local_disk0/tmp && git clone https://github.com/huggingface/text-generation-inference.git  --branch v1.0.0
+# MAGIC cd /local_disk0/tmp && git clone https://github.com/huggingface/text-generation-inference.git  
 # MAGIC cd /local_disk0/tmp/text-generation-inference && make install
 # MAGIC
 # MAGIC # install flash-attention
@@ -76,10 +76,10 @@ else:
   os.environ['sharded'] = 'true'
   os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3"
 
-
-os.environ['HUGGING_FACE_HUB_TOKEN'] = config['HUGGING_FACE_HUB_TOKEN']
+if "Llama-2" in config['model_id']: 
+  os.environ['HUGGING_FACE_HUB_TOKEN'] = config['HUGGING_FACE_HUB_TOKEN']
 os.environ['HUGGINGFACE_HUB_CACHE'] ='/local_disk0/tmp/'
-os.environ['CUDA_MEMORY_FRACTION'] = "1"
+os.environ['CUDA_MEMORY_FRACTION'] = "0.95"
 
 # get model variables
 os.environ['model_id'] = config['model_id']

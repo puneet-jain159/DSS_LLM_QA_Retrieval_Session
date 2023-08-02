@@ -21,8 +21,8 @@ The following code is tested on ML DBR GPU 13.2 Runtime
 
 ## Cluster Configurations
 It Code to run open LLMS has been tested on the below single node cluster configurations:
-- AWS : g5-12xlarge
-- Azure : NC24Ads_A100_v4
+- AWS : g5-12xlarge [4 A10's]
+- Azure : NC24Ads_A100_v4 [1 A100]
 
 ## Coverting PDF to txt
 There are two ways to convert the PDF to TXT
@@ -43,16 +43,17 @@ config['use_azure_formrecognizer'] = False
 ## Runnig the code using Open AI
 You can use any cluster to run the OpenAI model and need to set the following configs
 ```
-config['model_id'] == 'openai'
+set model_id t0 openai
+config['model_id'] = 'openai'
 os.environ['OPENAI_API_KEY'] = '<your open AI API Key>'
 ```
-Note : **when using OpenAI you do not need to run the 02_load_model Notebook**
+Note : **when using OpenAI you do not need to run the 02_load_model Notebook** and Azure open AI keys would need extra configurations to be added
 
 ## Runnig the code using LLAMA-2 Models:
 To use LLAMA-2 models, you need to agree to the terms and condition of HuggingFace and provide an API key to download the models
 Refer to these steps to download the key : https://huggingface.co/docs/api-inference/quicktour#get-your-api-token and set the below parameters
 ```
-config['model_id'] == 'meta-llama/Llama-2-XXb-chat-hf'
+config['model_id'] = 'meta-llama/Llama-2-XXb-chat-hf'
 config['HUGGING_FACE_HUB_TOKEN'] = '<your HF AI API Key>'
 ```
 Note : to need to keep 02_load_model Notebook running to have the API running
@@ -61,7 +62,7 @@ Note : to need to keep 02_load_model Notebook running to have the API running
 ## Runnig the code using Mosiac MPT models:
 you need to set the below config
 ```
-config['model_id'] == 'mosaicml/mpt-30b-chat'
+config['model_id'] = 'mosaicml/mpt-30b-chat'
 ```
 Note : to need to keep 02_load_model Notebook running to have the API running
 
