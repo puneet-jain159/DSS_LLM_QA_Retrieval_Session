@@ -16,7 +16,7 @@ IP = 'localhost'
 PORT = '8880'
 
 
-+"""Wrapper around HuggingFace Pipeline """
+"""Wrapper around HuggingFace Pipeline """
 class HuggingFacePipelineLocal(LLM):
 
     pipeline: Any  #: :meta private:
