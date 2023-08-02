@@ -20,9 +20,11 @@ Currently the code supports the following version
 The following code is tested on ML DBR GPU 13.2 Runtime
 
 ## Cluster Configurations
-It Code to run open LLMS has been tested on the below single node cluster configurations:
+The Code to run open LLMS has been tested on the below single node cluster configurations:
 - AWS : g5-12xlarge [4 A10's]
 - Azure : NC24Ads_A100_v4 [1 A100]
+
+The TGI pipeline has support to run on older Generation GPU's like the V100's but has not been tested extensively
 
 ## Coverting PDF to txt
 There are two ways to convert the PDF to TXT
