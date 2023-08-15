@@ -245,7 +245,7 @@ class HuggingFacePipelineLocal(LLM):
         return generated_text
       
 
-+"""Wrapper around Text Generation Inference APIs."""
+"""Wrapper around Text Generation Inference APIs."""
 
 class TGILocalPipeline(LLM):
     pipeline: Any  #: :meta private:
