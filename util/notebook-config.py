@@ -38,10 +38,10 @@ _ = spark.catalog.setCurrentDatabase(config['database_name'])
 import os
 
 if config['model_id'] == 'openai':
-  os.environ['OPENAI_API_KEY'] = 'xxxxxxxx'
+  os.environ['OPENAI_API_KEY'] = 'XXXXXXXXx'
 
 if "Llama-2" in config['model_id']:
-  config['HUGGING_FACE_HUB_TOKEN'] = 'xxxxxxxx'
+  config['HUGGING_FACE_HUB_TOKEN'] = 'XXXXXXXXX'
 
 # COMMAND ----------
 
@@ -52,8 +52,8 @@ config['vector_store_path'] = f"/dbfs/{username}/qabot/vector_store/{config['mod
 # COMMAND ----------
 
 if config['use_azure_formrecognizer'] == True:
-  config['formendpoint'] = 'xxxxxx'
-  config['formkey'] = 'xxxxxxx'
+  config['formendpoint'] = 'XXXXXXXXXXX'
+  config['formkey'] = 'XXXXXXXXX'
 
 # COMMAND ----------
 
@@ -77,33 +77,32 @@ if config['model_id'] == "openai":
 
 elif config['model_id'] == 'mosaicml/mpt-30b-chat' :
   # Setup prompt template ####
-  config['embedding_model'] = 'intfloat/e5-large-v2'
+  config['embedding_model'] = 'BAAI/bge-large-en'
 
   # Model parameters
   config['model_kwargs'] = {}
   config['pipeline_kwargs']={"temperature":  0.10,
                             "max_new_tokens": 256}
   
-  config['template'] = """<|im_start|>system\n-You are a helpful assistant chatbot trained by MosaicML. You are good at helping to answer a question based on the context provided, the context is a document. \n-If the question doesn't form a complete sentence, just say I don't know.\n-If the context is irrelevant to the question, just say I don't know.,\n-If there is a good answer from the context, try to summarize the answer to the question. \n<|im_end|>\n<|im_start|>user\n Given the context: {context}. Answer the question {question} <|im_end|><|im_start|>assistant\n""".strip()
+  config['template'] = """<|im_start|>system\n-ou are a assistant built to answer policy related questions based on the context provided, the context is a document and use no other information.If the context does not provide enough relevant information to determine the answer, just say I don't know. If the context is irrelevant to the question, just say I don't know. If the query doesn't form a complete question, just say I don't know.Only answer the question asked and do not repeat the question \n<|im_end|>\n<|im_start|>user\n Given the context: {context}. Answer the question {question} <|im_end|><|im_start|>assistant\n""".strip()
 
 elif config['model_id'] == 'meta-llama/Llama-2-13b-chat-hf' :
   # Setup prompt template ####
-  config['embedding_model'] = 'intfloat/e5-large-v2'
+  config['embedding_model'] = 'BAAI/bge-large-en'
   config['model_kwargs'] = {}
   
   # Model parameters
   config['pipeline_kwargs']={"temperature":  0.10,
                             "max_new_tokens": 256}
   
-  config['template'] = """<s>[INST] <<SYS>>
-    You are a assistant built to answer policy related questions based on the context provided, the context is a document and use no other information.
-    <</SYS>> Given the context: {context}. Answer the question {question} \n
-     If the context does not provide enough relevant information to determine the answer, just say I don't know. If the context is irrelevant to the question, just say I don't know. If you did not find a good answer from the context, just say I don't know. If the query doesn't form a complete question, just say I don't know. only answer the question asked
-    [/INST]""".strip()
+  config['template'] = """<s><<SYS>>
+  You are a assistant built to answer policy related questions based on the context provided, the context is a document and use no other information.If the context does not provide enough relevant information to determine the answer, just say I don't know. If the context is irrelevant to the question, just say I don't know. If the query doesn't form a complete question, just say I don't know.Only answer the question asked and do not repeat the question
+  <</SYS>>[INST] Given the context: {context}. Answer the question {question} ?\n
+  [/INST]""".strip()
 
 elif config['model_id'] == 'meta-llama/Llama-2-70b-chat-hf' :
   # Setup prompt template ####
-  config['embedding_model'] = 'intfloat/e5-large-v2'
+  config['embedding_model'] = 'BAAI/bge-large-en'
   
   config['model_kwargs'] = {"load_in_8bit" : True}
 
@@ -111,15 +110,10 @@ elif config['model_id'] == 'meta-llama/Llama-2-70b-chat-hf' :
   config['pipeline_kwargs']={"temperature":  0.10,
                             "max_new_tokens": 256}
   
-  config['template'] = """<s>[INST] <<SYS>>
-    You are a assistant built to answer policy related questions based on the context provided, the context is a document and use no other information.
-    <</SYS>> Given the context: {context}. Answer the question {question} \n
-     If the context does not provide enough relevant information to determine the answer, just say I don't know. If the context is irrelevant to the question, just say I don't know. If the query doesn't form a complete question, just say I don't know.
-    [/INST]""".strip()
-
-
-
-
+  config['template'] = """<s><<SYS>>
+  You are a assistant built to answer policy related questions based on the context provided, the context is a document and use no other information.If the context does not provide enough relevant information to determine the answer, just say I don't know. If the context is irrelevant to the question, just say I don't know. If the query doesn't form a complete question, just say I don't know.Only answer the question asked and do not repeat the question
+  <</SYS>>[INST] Given the context: {context}. Answer the question {question} ?\n
+  [/INST]""".strip()
 
 # COMMAND ----------
 
