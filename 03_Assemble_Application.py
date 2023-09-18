@@ -3,6 +3,10 @@
 
 # COMMAND ----------
 
+
+
+# COMMAND ----------
+
 # MAGIC %md ##Introduction
 # MAGIC
 # MAGIC With our documents indexed, we can now focus our attention on assembling the core application logic.  This logic will have us retrieve a document from our vector store based on a user-provided question.  That question along with the document, added to provide context, will then be used to assemble a prompt which will then be sent to a model in order to generate a response. </p>
@@ -56,7 +60,7 @@ from util.mptbot import HuggingFacePipelineLocal,TGILocalPipeline
 # COMMAND ----------
 
 # DBTITLE 1,Specify Question
-question =   "what is the duration for the policy bought by the policy holder mentioned in the Policy Schedule / Validation Certificate?"
+question =   """ What is the name of policy holder?"""
 
 # COMMAND ----------
 
@@ -87,8 +91,9 @@ vector_store = FAISS.load_local(embeddings=embeddings, folder_path=config['vecto
 n_documents = 10 # number of documents to retrieve 
 retriever = vector_store.as_retriever(search_kwargs={'k': n_documents}) # configure retrieval mechanism
 
+prepend_query ="Represent this sentence for searching relevant passages: \n "
 # get relevant documents
-docs = retriever.get_relevant_documents(question)
+docs = retriever.get_relevant_documents(prepend_query+ question)
 for doc in docs: 
   print(doc.page_content,'\n','*'*50) 
 
@@ -99,6 +104,13 @@ for doc in docs:
 # MAGIC Please note that the prompt consists multiple prompt elements, defined using [prompt templates](https://python.langchain.com/en/latest/modules/prompts/chat_prompt_template.html).  In a nutshell, prompt templates allow us to define the basic structure of a prompt and more easily substitute variable data into them to trigger a response.  The system message prompt shown here provides instruction to the model about how we want it to respond.  The human message template provides the details about the user-initiated request.
 # MAGIC
 # MAGIC The prompts along with the details about the model that will respond to the prompt are encapsulated within an [LLMChain object](https://python.langchain.com/en/latest/modules/chains/generic/llm_chain.html).  This object simply defines the basic structure for resolving a query and returning a reponse:
+
+# COMMAND ----------
+
+config['template'] = """<s><<SYS>>
+  You are a assistant built to answer policy related questions based on the context provided, the context is a document and use no other information.If the context does not provide enough relevant information to determine the answer, just say I don't know. If the context is irrelevant to the question, just say I don't know. If the query doesn't form a complete question, just say I don't know.Only answer the question asked and do not repeat the question
+  <</SYS>>[INST] Given the context: {context}.  Answer the question {question} ?\n [/INST]
+""".strip()
 
 # COMMAND ----------
 
@@ -133,13 +145,19 @@ qa_chain = LLMChain(
 
 # COMMAND ----------
 
+text = ""
+for x in range(0,n_documents,3):
+  for doc in docs[x:x+3]:
+    text += "\nParagraph: \n" + doc.page_content
+print(text)
+
+# COMMAND ----------
+
 # DBTITLE 1,Generate a Response
 # for each provided document
-doc = docs[0]
-
-# get document text
-text = doc.page_content
-print(text)
+text = ""
+for doc in docs[0:3]:
+  text += "\nParagraph: \n" + doc.page_content
 # generate a response
 output = qa_chain.generate([{'context': text, 'question': question}])
 
@@ -163,7 +181,7 @@ if answer is not None:
 class QABot():
 
 
-  def __init__(self, llm, retriever, prompt):
+  def __init__(self, llm, retriever, prompt ,club_chunks = 3):
     self.llm = llm
     self.retriever = retriever
     self.prompt = prompt
@@ -176,7 +194,7 @@ class QABot():
     result = True # default response
 
     badanswer_phrases = [ # phrases that indicate model produced non-answer
-      "no information", "no context", "don't know", "no clear answer", "sorry","not mentioned","do not know","i don't see any information",
+      "no information", "no context", "don't know", "no clear answer", "sorry","not mentioned","do not know","i don't see any information","i cannot provide information",
       "no answer", "no mention","not mentioned","not mention", "context does not provide", "no helpful answer", "not specified","not know the answer", 
       "no helpful", "no relevant", "no question", "not clear","not explicitly","provide me with the actual context document",
       "i'm ready to assist","I can answer the following questions"
@@ -189,7 +207,8 @@ class QABot():
         if phrase in answer.lower():
           result = False
           break
-    
+    if answer[-1] == "?":
+      result = False
     return result
 
 
@@ -233,20 +252,27 @@ class QABot():
     # default result
     result = {'answer':None, 'source':None, 'output_metadata':None}
 
+    retriever_addon = "Represent this sentence for searching relevant passages: \n"
 
     # get relevant documents
-    docs = self.retriever.get_relevant_documents(question)
+    docs = self.retriever.get_relevant_documents(retriever_addon + question)
 
     # for each doc ...
-    for doc in docs:
+
+    for x in range(0,len(docs),3):
+      text = ""
+      print(x,x+3)
+      for doc in docs[x:x+3]:
+        text += "\nParagraph: \n" + doc.page_content
+    # print(text)
 
       # get key elements for doc
-      text = doc.page_content
+      # text = doc.page_content
       source = doc.metadata['source']
 
       # get an answer from llm
       output = self._get_answer(text, question)
- 
+
       # get output from results
       generation = output.generations[0][0]
       answer = generation.text
@@ -259,12 +285,13 @@ class QABot():
         result['source'] = source
         result['output_metadata'] = output_metadata
         result['vector_doc'] = text
-        break # stop looping if good answer
+        return result
       else:
         result['answer'] = "Could not fine answer please rephrase the question or provide more context?"
         result['source'] = "NA"
         result['output_metadata'] = "NA"
         result['vector_doc'] = "NA"
+        # print("text:",text)
       
     return result
 
@@ -399,3 +426,7 @@ with mlflow.start_run(run_name = config['model_id']):
 # MAGIC | tiktoken | Fast BPE tokeniser for use with OpenAI's models | MIT  |   https://pypi.org/project/tiktoken/ |
 # MAGIC | faiss-cpu | Library for efficient similarity search and clustering of dense vectors | MIT  |   https://pypi.org/project/faiss-cpu/ |
 # MAGIC | openai | Building applications with LLMs through composability | MIT  |   https://pypi.org/project/openai/ |
+
+# COMMAND ----------
+
+

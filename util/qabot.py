@@ -4,18 +4,13 @@ import time
 import openai
 
 class QABot():
-  """
-  Function to create the bot
-  """
-  def __init__(self, llm, retriever, prompt):
+
+
+  def __init__(self, llm, retriever, prompt ,club_chunks = 3):
     self.llm = llm
     self.retriever = retriever
     self.prompt = prompt
     self.qa_chain = LLMChain(llm = self.llm, prompt=prompt)
-    self.abbreviations = { # known abbreviations we want to replace
-      "LSEG": "London Stock Exchange Group"
-      } 
-
 
   def _is_good_answer(self, answer):
 
@@ -24,13 +19,12 @@ class QABot():
     result = True # default response
 
     badanswer_phrases = [ # phrases that indicate model produced non-answer
-      "no information", "no context", "don't know", "no clear answer", "sorry","not mentioned","do not know","i don't see any information",
+      "no information", "no context", "don't know", "no clear answer", "sorry","not mentioned","do not know","i don't see any information","i cannot provide information",
       "no answer", "no mention","not mentioned","not mention", "context does not provide", "no helpful answer", "not specified","not know the answer", 
-      "no helpful", "no relevant", "no question", "not clear","not explicitly","provide me with the actual context document",
+      "no helpful", "no relevant", "no question", "not clear","provide me with the actual context document",
       "i'm ready to assist","I can answer the following questions"
       "don't have enough information", " does not have the relevant information", "does not seem to be directly related","cannot determine"
       ]
-    
     if answer is None: # bad answer if answer is none
       results = False
     else: # bad answer if contains badanswer phrase
@@ -38,7 +32,8 @@ class QABot():
         if phrase in answer.lower():
           result = False
           break
-    
+    if answer[-1] == "?":
+      result = False
     return result
 
 
@@ -82,28 +77,31 @@ class QABot():
     # default result
     result = {'answer':None, 'source':None, 'output_metadata':None}
 
-    # remove common abbreviations from question
-    for abbreviation, full_text in self.abbreviations.items():
-      pattern = re.compile(fr'\b({abbreviation}|{abbreviation.lower()})\b', re.IGNORECASE)
-      question = pattern.sub(f"{abbreviation} ({full_text})", question)
+    retriever_addon = "Represent this sentence for searching relevant passages: \n"
 
     # get relevant documents
-    docs = self.retriever.get_relevant_documents(question)
+    docs = self.retriever.get_relevant_documents(retriever_addon + question)
 
     # for each doc ...
-    for doc in docs:
+
+    for x in range(0,len(docs),3):
+      text = ""
+      print(x,x+3)
+      for doc in docs[x:x+3]:
+        text += "\nParagraph: \n" + doc.page_content
+    # print(text)
 
       # get key elements for doc
-      text = doc.page_content
+      # text = doc.page_content
       source = doc.metadata['source']
 
       # get an answer from llm
       output = self._get_answer(text, question)
- 
+
       # get output from results
       generation = output.generations[0][0]
       answer = generation.text
-      print("answer: ",answer)
+      print("answer:",answer)
       output_metadata = output.llm_output
 
       # assemble results if not no_answer
@@ -112,11 +110,12 @@ class QABot():
         result['source'] = source
         result['output_metadata'] = output_metadata
         result['vector_doc'] = text
-        break # stop looping if good answer
+        return result
       else:
-        result['answer'] = "could not find answer the question. please elaborate or provide more context?"
-        result['source'] = source
-        result['output_metadata'] = output_metadata
-        result['vector_doc'] = text
+        result['answer'] = "Could not fine answer please rephrase the question or provide more context?"
+        result['source'] = "NA"
+        result['output_metadata'] = "NA"
+        result['vector_doc'] = "NA"
+        # print("text:",text)
       
     return result

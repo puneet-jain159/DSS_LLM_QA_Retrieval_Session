@@ -141,8 +141,8 @@ for chunk in text_splitter.split_text(long_text):
 # COMMAND ----------
 
 # DBTITLE 1,Chunking Configurations
-chunk_size = 1024
-chunk_overlap = 350
+chunk_size = 512
+chunk_overlap = 50
 
 # COMMAND ----------
 
@@ -231,11 +231,11 @@ vector_store.save_local(folder_path=config['vector_store_path'])
 
 # COMMAND ----------
 
-dbutils.notebook.exit("exit")
+# !rm -rf '/dbfs/puneet.jain@databricks.com/qabot/vector_store/meta-llama/Llama-2-13b-chat-hf/insurance_qa_bot'
 
 # COMMAND ----------
 
-
+dbutils.notebook.exit("exit")
 
 # COMMAND ----------
 

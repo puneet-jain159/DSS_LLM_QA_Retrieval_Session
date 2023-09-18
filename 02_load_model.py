@@ -23,14 +23,7 @@ if config['model_id'] == "openai":
 
 # COMMAND ----------
 
-# MAGIC %sh
-# MAGIC wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-# MAGIC sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-# MAGIC sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
-# MAGIC sudo add-apt-repository -y "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
-# MAGIC sudo apt-get update
-# MAGIC
-# MAGIC apt-get install -y libcusparse-dev-11-7 libcublas-dev-11-7 libcusolver-dev-11-7
+# ! rm -rf /dbfs/$user/tgi/*
 
 # COMMAND ----------
 
@@ -51,19 +44,75 @@ if config['model_id'] == "openai":
 # MAGIC rm -rf  /local_disk0/tmp/text-generation-inference
 # MAGIC cd /local_disk0/tmp && git clone https://github.com/huggingface/text-generation-inference.git  
 # MAGIC cd /local_disk0/tmp/text-generation-inference && make install
-# MAGIC
-# MAGIC # install flash-attention
-# MAGIC cd server && make install install-flash-attention  && make install install-flash-attention-v2 && make install-vllm
-# MAGIC  
-# MAGIC # correct the pip libraries
-# MAGIC pip install urllib3==1.25.4
-# MAGIC pip install protobuf==3.20.*
 
 # COMMAND ----------
 
- #dbutils.library.restartPython() 
+# MAGIC %sh 
+# MAGIC FILE=/dbfs/$user/tgi/flash_attn-1.0.8-cp310-cp310-linux_x86_64.whl 
+# MAGIC if test -f "$FILE"; then
+# MAGIC     echo "$FILE exists."
+# MAGIC else
+# MAGIC     export flash_att_commit='3a9bfd076f98746c73362328958dbc68d145fbec'
+# MAGIC     mkdir /dbfs/$user/tgi/  -p
+# MAGIC     rm -rf  /local_disk0/tmp/flash-attention
+# MAGIC     cd /local_disk0/tmp && git clone https://github.com/HazyResearch/flash-attention.git 
+# MAGIC
+# MAGIC     cd flash-attention && git fetch && git checkout ${flash_att_commit}
+# MAGIC     python setup.py build
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp  dist/flash_attn-1.0.8-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/flash_attn-1.0.8-cp310-cp310-linux_x86_64.whl
+# MAGIC     cd csrc/rotary && python setup.py build 
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp  dist/rotary_emb-0.1-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/rotary_emb-0.1-cp310-cp310-linux_x86_64.whl
+# MAGIC     cd ..
+# MAGIC     cd layer_norm && python setup.py build 
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp  dist/dropout_layer_norm-0.1-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/dropout_layer_norm-0.1-cp310-cp310-linux_x86_64.whl
+# MAGIC fi
 
+# COMMAND ----------
 
+# MAGIC %sh 
+# MAGIC FILE=/dbfs/$user/tgi/flash_attn-2.0.0.post1-cp310-cp310-linux_x86_64.whl
+# MAGIC if test -f "$FILE"; then
+# MAGIC     echo "$FILE exists."
+# MAGIC else
+# MAGIC     export flash_att_v2_commit='4f285b354796fb17df8636485b9a04df3ebbb7dc'
+# MAGIC
+# MAGIC     rm -rf  /local_disk0/tmp/flash-attention-v2
+# MAGIC     cd /local_disk0/tmp && git clone https://github.com/HazyResearch/flash-attention.git flash-attention-v2
+# MAGIC
+# MAGIC     cd flash-attention-v2 && git fetch && git checkout ${flash_att_v2_commit}
+# MAGIC     python setup.py build
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp  dist/flash_attn-2.0.0.post1-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/flash_attn-2.0.0.post1-cp310-cp310-linux_x86_64.whl
+# MAGIC fi
+
+# COMMAND ----------
+
+# MAGIC %sh 
+# MAGIC FILE=/dbfs/$user/tgi/vllm-0.0.0-cp310-cp310-linux_x86_64.whl
+# MAGIC if test -f "$FILE"; then
+# MAGIC     echo "$FILE exists."
+# MAGIC else
+# MAGIC     export vllm_commit='d284b831c17f42a8ea63369a06138325f73c4cf9'
+# MAGIC
+# MAGIC     rm -rf  /local_disk0/tmp/vllm
+# MAGIC     cd /local_disk0/tmp && git clone https://github.com/OlivierDehaene/vllm.git
+# MAGIC
+# MAGIC     cd vllm && git fetch && git checkout ${vllm_commit}
+# MAGIC     python setup.py build
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp dist/vllm-0.0.0-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/vllm-0.0.0-cp310-cp310-linux_x86_64.whl
+# MAGIC fi
+
+# COMMAND ----------
+
+# MAGIC %pip install /dbfs/$user/tgi/flash_attn-2* /dbfs/$user/tgi/dropout_laye* /dbfs/$user/tgi/rotary_emb*  /dbfs/$user/tgi/vllm*  urllib3==1.25.4 protobuf==3.20.*
+
+# COMMAND ----------
+
+ dbutils.library.restartPython() 
 
 # COMMAND ----------
 
@@ -86,7 +135,7 @@ os.environ['model_id'] = config['model_id']
 if "load_in_8bit" in config['model_kwargs']:
   os.environ['quantize'] = "bitsandbytes"
 if config['model_id'] != 'meta-llama/Llama-2-70b-chat-hf':
-  os.environ['CUDA_MEMORY_FRACTION'] = ".8"
+  os.environ['CUDA_MEMORY_FRACTION'] = ".9"
 
 
 # COMMAND ----------
@@ -102,6 +151,10 @@ driver_proxy_api = '{driver_proxy_api}'
 cluster_id = '{ctx.clusterId}'
 port = {port}
 """)
+
+# COMMAND ----------
+
+! echo $CUDA_MEMORY_FRACTION
 
 # COMMAND ----------
 
