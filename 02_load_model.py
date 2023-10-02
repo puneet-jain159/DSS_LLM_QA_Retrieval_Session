@@ -32,7 +32,7 @@ if config['model_id'] == "openai":
 # MAGIC curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > tmp.sh
 # MAGIC sh tmp.sh -y
 # MAGIC source "$HOME/.cargo/env"
-# MAGIC
+# MAGIC export tgi_commit='5ba53d44a18983a4de32d122f4cb46f4a17d9ef6'
 # MAGIC # install protoc
 # MAGIC PROTOC_ZIP=protoc-21.12-linux-x86_64.zip
 # MAGIC curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/$PROTOC_ZIP
@@ -43,7 +43,8 @@ if config['model_id'] == "openai":
 # MAGIC # install text-generation-inference
 # MAGIC rm -rf  /local_disk0/tmp/text-generation-inference
 # MAGIC cd /local_disk0/tmp && git clone https://github.com/huggingface/text-generation-inference.git  
-# MAGIC cd /local_disk0/tmp/text-generation-inference && make install
+# MAGIC cd /local_disk0/tmp/text-generation-inference 
+# MAGIC  git fetch && git checkout ${tgi_commit} && make install
 
 # COMMAND ----------
 
@@ -73,11 +74,11 @@ if config['model_id'] == "openai":
 # COMMAND ----------
 
 # MAGIC %sh 
-# MAGIC FILE=/dbfs/$user/tgi/flash_attn-2.0.0.post1-cp310-cp310-linux_x86_64.whl
+# MAGIC FILE=/dbfs/$user/tgi/flash_attn-2.3.0-cp310-cp310-linux_x86_64.whl
 # MAGIC if test -f "$FILE"; then
 # MAGIC     echo "$FILE exists."
 # MAGIC else
-# MAGIC     export flash_att_v2_commit='4f285b354796fb17df8636485b9a04df3ebbb7dc'
+# MAGIC     export flash_att_v2_commit='601b4dc48dbe9d87c468daa2b4c0c8388b83753c'
 # MAGIC
 # MAGIC     rm -rf  /local_disk0/tmp/flash-attention-v2
 # MAGIC     cd /local_disk0/tmp && git clone https://github.com/HazyResearch/flash-attention.git flash-attention-v2
@@ -85,7 +86,7 @@ if config['model_id'] == "openai":
 # MAGIC     cd flash-attention-v2 && git fetch && git checkout ${flash_att_v2_commit}
 # MAGIC     python setup.py build
 # MAGIC     python setup.py bdist_wheel
-# MAGIC     cp  dist/flash_attn-2.0.0.post1-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/flash_attn-2.0.0.post1-cp310-cp310-linux_x86_64.whl
+# MAGIC     cp  dist/flash_attn-2.3.0-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/flash_attn-2.3.0-cp310-cp310-linux_x86_64.whl
 # MAGIC fi
 
 # COMMAND ----------
@@ -95,7 +96,7 @@ if config['model_id'] == "openai":
 # MAGIC if test -f "$FILE"; then
 # MAGIC     echo "$FILE exists."
 # MAGIC else
-# MAGIC     export vllm_commit='d284b831c17f42a8ea63369a06138325f73c4cf9'
+# MAGIC     export vllm_commit='25dbff97d5a8f2ba331847237b458b2692e9ae78'
 # MAGIC
 # MAGIC     rm -rf  /local_disk0/tmp/vllm
 # MAGIC     cd /local_disk0/tmp && git clone https://github.com/OlivierDehaene/vllm.git
@@ -108,11 +109,54 @@ if config['model_id'] == "openai":
 
 # COMMAND ----------
 
-# MAGIC %pip install /dbfs/$user/tgi/flash_attn-2* /dbfs/$user/tgi/dropout_laye* /dbfs/$user/tgi/rotary_emb*  /dbfs/$user/tgi/vllm*  urllib3==1.25.4 protobuf==3.20.*
+# MAGIC %sh 
+# MAGIC FILE=/dbfs/$user/tgi/awq_inference_engine-0.0.0-cp310-cp310-linux_x86_64.whl
+# MAGIC if test -f "$FILE"; then
+# MAGIC     echo "$FILE exists."
+# MAGIC else
+# MAGIC     export awq_commit='f084f40bd996f3cf3a0633c1ad7d9d476c318aaa'
+# MAGIC
+# MAGIC     rm -rf /local_disk0/tmp/llm-awq  
+# MAGIC     cd /local_disk0/tmp && git clone https://github.com/mit-han-lab/llm-awq
+# MAGIC
+# MAGIC     cd llm-awq  && git fetch && git checkout ${awq_commit}
+# MAGIC     cd awq/kernels && python setup.py build
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp dist/awq_inference_engine-0.0.0-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/awq_inference_engine-0.0.0-cp310-cp310-linux_x86_64.whl
+# MAGIC fi
 
 # COMMAND ----------
 
- dbutils.library.restartPython() 
+# MAGIC %sh 
+# MAGIC FILE=/dbfs/$user/tgi/EETQ-1.0.0b0-cp310-cp310-linux_x86_64.whl
+# MAGIC if test -f "$FILE"; then
+# MAGIC     echo "$FILE exists."
+# MAGIC else
+# MAGIC     export eetq_commit='e44e3082d8e69917816a3d3d708af8fbc132e27a'
+# MAGIC     pip install packaging
+# MAGIC     rm -rf /local_disk0/tmp/eetq
+# MAGIC     cd /local_disk0/tmp && git clone https://github.com/NetEase-FuXi/EETQ.git eetq
+# MAGIC
+# MAGIC     cd eetq && git fetch && git checkout $(eetq_commit)
+# MAGIC     git submodule update --init --recursive
+# MAGIC     cd eetq 
+# MAGIC     python setup.py build
+# MAGIC     python setup.py bdist_wheel
+# MAGIC     cp dist/EETQ-1.0.0b0-cp310-cp310-linux_x86_64.whl /dbfs/$user/tgi/EETQ-1.0.0b0-cp310-cp310-linux_x86_64.whl
+# MAGIC fi
+
+# COMMAND ----------
+
+# ! ls /local_disk0/tmp/eetq/dist
+! ls /dbfs/$user/tgi/
+
+# COMMAND ----------
+
+# MAGIC %pip install /dbfs/$user/tgi/flash_attn-2* /dbfs/$user/tgi/dropout_laye* /dbfs/$user/tgi/rotary_emb*  /dbfs/$user/tgi/vllm*  /dbfs/$user/tgi/awq_inference_engine*  /dbfs/$user/tgi/EETQ* urllib3==1.25.4 protobuf==3.20.*
+
+# COMMAND ----------
+
+  dbutils.library.restartPython() 
 
 # COMMAND ----------
 
@@ -163,7 +207,7 @@ port = {port}
 # MAGIC
 # MAGIC if [ -z ${quantize} ]; 
 # MAGIC     then echo "quantize" && text-generation-launcher --model-id $model_id --port 8880 --trust-remote-code --sharded $sharded --max-input-length 2048 --max-total-tokens 4096 ;
-# MAGIC else text-generation-launcher --model-id $model_id --port 8880 --trust-remote-code --sharded $sharded --max-input-length 2048 --max-total-tokens 4096 --quantize bitsandbytes  ;
+# MAGIC else text-generation-launcher --model-id $model_id --port 8880 --trust-remote-code --sharded $sharded --max-input-length 2048 --max-total-tokens 4096 --quantize $quantize --max-batch-prefill-tokens 4096  ;
 # MAGIC fi
 # MAGIC
 
