@@ -14,7 +14,7 @@ Currently the code supports the following version
 - [Open AI](#runnig-the-code-using-open-ai)
 - [MPT-30b Chat version](#runnig-the-code-using-mosiac-mpt-models)
 - [Llama-2-13b HF-chat version](#runnig-the-code-using-llama-2-models)
-- [Llama-2-7-b HF-chat version with 8-bit Quantization](#runnig-the-code-using-llama-2-models)
+- [Llama-2-70-b HF-chat version with 8-bit Quantization](#runnig-the-code-using-llama-2-models)
 
 ## Runtime Tested
 The following code is tested on ML DBR GPU 13.2 Runtime
