@@ -156,7 +156,7 @@ if config['model_id'] == "openai":
 
 # COMMAND ----------
 
-  dbutils.library.restartPython() 
+  # dbutils.library.restartPython() 
 
 # COMMAND ----------
 
