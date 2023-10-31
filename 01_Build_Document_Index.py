@@ -52,6 +52,10 @@ else:
 
 # COMMAND ----------
 
+! ls /dbfs/FileStore/insurance_policy_doc
+
+# COMMAND ----------
+
 display(df)
 
 # COMMAND ----------

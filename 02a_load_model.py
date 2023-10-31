@@ -160,7 +160,7 @@ if config['model_id'] == "openai":
 
 # COMMAND ----------
 
-import os 
+# import os 
 nodeid = spark.conf.get('spark.databricks.driverNodeTypeId')
 if "A100" in nodeid:
   os.environ['sharded'] = 'false'
@@ -207,7 +207,7 @@ port = {port}
 # MAGIC
 # MAGIC if [ -z ${quantize} ]; 
 # MAGIC     then echo "quantize" && text-generation-launcher --model-id $model_id --port 8880 --trust-remote-code --sharded $sharded --max-input-length 2048 --max-total-tokens 4096 ;
-# MAGIC else text-generation-launcher --model-id $model_id --port 8880 --trust-remote-code --sharded $sharded --max-input-length 2048 --max-total-tokens 4096 --quantize $quantize --max-batch-prefill-tokens 4096  ;
+# MAGIC else text-generation-launcher --model-id $model_id --port 8880 --trust-remote-code --sharded $sharded --max-input-length 2048 --max-total-tokens 4096 --quantize $quantize --max-batch-prefill-tokens 4096 ;
 # MAGIC fi
 # MAGIC
 

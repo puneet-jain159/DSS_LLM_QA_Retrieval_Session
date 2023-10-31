@@ -3,10 +3,6 @@
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 # MAGIC %md ##Introduction
 # MAGIC
 # MAGIC With our documents indexed, we can now focus our attention on assembling the core application logic.  This logic will have us retrieve a document from our vector store based on a user-provided question.  That question along with the document, added to provide context, will then be used to assemble a prompt which will then be sent to a model in order to generate a response. </p>
@@ -44,7 +40,11 @@ from langchain.prompts import PromptTemplate
 from langchain.base_language import BaseLanguageModel
 
 from langchain import LLMChain
-from util.mptbot import HuggingFacePipelineLocal,TGILocalPipeline
+from util.mptbot import HuggingFacePipelineLocal,TGILocalPipeline, VLLMLocalPipeline
+
+import mlflow
+from mlflow.models import infer_signature
+mlflow.set_registry_uri("databricks-uc")
 
 # COMMAND ----------
 
@@ -116,8 +116,7 @@ config['template'] = """<s><<SYS>>
 
 # DBTITLE 1,Define Chain to Generate Responses
 # define system-level instructions
-system_message_prompt = SystemMessagePromptTemplate.from_template(config['template'])
-chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt])
+chat_prompt = PromptTemplate.from_template(config['template'])
 
 
 if config['model_id']  == 'openai':
@@ -125,9 +124,14 @@ if config['model_id']  == 'openai':
   # define model to respond to prompt
   llm = ChatOpenAI(model_name=config['openai_chat_model'], temperature=config['temperature'])
 
-else:
+elif config['use_vllm']:
   # define model to respond to prompt
-  llm = TGILocalPipeline.from_model_id(
+  llm = VLLMLocalPipeline.from_model_id(
+    model_id=config['model_id'],
+    model_kwargs =config['model_kwargs'],
+    pipeline_kwargs= config['pipeline_kwargs'])
+else:
+    llm = TGILocalPipeline.from_model_id(
     model_id=config['model_id'],
     model_kwargs =config['model_kwargs'],
     pipeline_kwargs= config['pipeline_kwargs'])
@@ -196,7 +200,7 @@ class QABot():
     badanswer_phrases = [ # phrases that indicate model produced non-answer
       "no information", "no context", "don't know", "no clear answer", "sorry","not mentioned","do not know","i don't see any information","i cannot provide information",
       "no answer", "no mention","not mentioned","not mention", "context does not provide", "no helpful answer", "not specified","not know the answer", 
-      "no helpful", "no relevant", "no question", "not clear","not explicitly","provide me with the actual context document",
+      "no helpful", "no relevant", "no question", "not clear","provide me with the actual context document",
       "i'm ready to assist","I can answer the following questions"
       "don't have enough information", " does not have the relevant information", "does not seem to be directly related","cannot determine"
       ]
@@ -283,7 +287,7 @@ class QABot():
       if self._is_good_answer(answer):
         result['answer'] = answer
         result['source'] = source
-        result['output_metadata'] = output_metadata
+        result['output_metadata'] =  "NA"
         result['vector_doc'] = text
         return result
       else:
@@ -311,7 +315,7 @@ class QABot():
 
 # COMMAND ----------
 
-question =  "what is the duration for the policy mentioned in the policy schedule / Validation schedule"
+question =  "what is the vehicle age covered by the policy?"
 
 # COMMAND ----------
 
@@ -354,6 +358,7 @@ class MLflowQABot(mlflow.pyfunc.PythonModel):
 
 try :
   spark.read.table("eval_questions")
+  spark.read.table( config['use-case'])
 except:
   print("Creating the evaluation dataset")
   questions = pd.DataFrame(
@@ -380,12 +385,16 @@ except:
 
 # DBTITLE 1,Persist Evaluation to MLflow
 # instantiate mlflow model
-model = MLflowQABot(llm, retriever, chat_prompt)
-
 with mlflow.start_run(run_name = config['model_id']):
+
+  model = MLflowQABot(llm, retriever, chat_prompt)
   # Load the dataset and add it to the model run
+    MODEL_NAME = f"{config['catalog_name']}.{config['database_name']}.{config['model_id'].replace('/','_')}"
     questions = mlflow.data.load_delta(table_name = 'eval_questions')
     mlflow.log_input(questions, context="eval_set")
+
+    training = mlflow.data.load_delta(table_name = config['use-case'])
+    mlflow.log_input(training, context="input_training_set")
 
   # Load model Parameters
     mlflow.log_param("model_id",config['model_id'])
@@ -402,8 +411,15 @@ with mlflow.start_run(run_name = config['model_id']):
 
 
     questions = spark.read.table("eval_questions").toPandas()
+    training = spark.read.table(config['use-case']).toPandas()
     outputs = model.predict(context = None,inputs =questions)
 
+    inf = infer_signature(question,outputs)
+    mlflow.pyfunc.log_model(
+    python_model =model,
+    artifact_path = 'model',
+    signature=inf,
+    registered_model_name=MODEL_NAME)
 
 
     # Evaluate the model on some example questions
