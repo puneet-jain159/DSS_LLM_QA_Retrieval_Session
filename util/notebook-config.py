@@ -15,12 +15,13 @@ config['use-case']="insurance_qa_bot"
 
 # Define the model we would like to use
 # config['model_id'] = 'openai'
-config['model_id'] = 'meta-llama/Llama-2-13b-chat-hf'
 # config['model_id'] = 'meta-llama/Llama-2-13b-chat-hf'
+config['model_id'] = 'meta-llama/Llama-2-70b-chat-hf'
 # config['model_id'] = 'mosaicml/mpt-30b-chat'
 username = dbutils.notebook.entry_point.getDbutils().notebook().getContext().tags().apply('user')
 config['use_azure_formrecognizer'] = True
 config['use_vllm'] = True
+config['use_uc'] = False
 
 # COMMAND ----------
 
@@ -28,8 +29,9 @@ config['use_vllm'] = True
 config['database_name'] = 'qabot'
 config['catalog_name'] = 'mlops_pj'
 
+if config['use_uc']:  
 # create database if not exists
-_ = spark.sql(f"use catalog {config['catalog_name']}")
+  _ = spark.sql(f"use catalog {config['catalog_name']}")
 
 # create database if not exists
 _ = spark.sql(f"create database if not exists {config['database_name']}")
@@ -43,10 +45,10 @@ _ = spark.catalog.setCurrentDatabase(config['database_name'])
 import os
 
 if config['model_id'] == 'openai':
-  os.environ['OPENAI_API_KEY'] = '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'
+  os.environ['OPENAI_API_KEY'] = 'XXXXX'
 
 if "Llama-2" in config['model_id']:
-  config['HUGGING_FACE_HUB_TOKEN'] = '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'
+  config['HUGGING_FACE_HUB_TOKEN'] = 'XXXXX'
 
 # COMMAND ----------
 
@@ -82,7 +84,7 @@ if config['model_id'] == "openai":
 
 elif config['model_id'] == 'mosaicml/mpt-30b-chat' :
   # Setup prompt template ####
-  config['embedding_model'] = 'BAAI/bge-large-en'
+  config['embedding_model'] = 'BAAI/bge-large-en-v1.5'
 
   # Model parameters
   config['model_kwargs'] = {}
@@ -93,7 +95,7 @@ elif config['model_id'] == 'mosaicml/mpt-30b-chat' :
 
 elif config['model_id'] == 'meta-llama/Llama-2-13b-chat-hf' :
   # Setup prompt template ####
-  config['embedding_model'] = 'BAAI/bge-large-en'
+  config['embedding_model'] = 'BAAI/bge-large-en-v1.5'
   config['model_kwargs'] = {}
   
   # Model parameters
@@ -108,7 +110,7 @@ elif config['model_id'] == 'meta-llama/Llama-2-13b-chat-hf' :
 
 elif config['model_id'] == 'meta-llama/Llama-2-70b-chat-hf' :
   # Setup prompt template ####
-  config['embedding_model'] = 'BAAI/bge-large-en'
+  config['embedding_model'] = 'BAAI/bge-large-en-v1.5'
   
   config['model_kwargs'] = {"load_in_8bit" : True}
 
