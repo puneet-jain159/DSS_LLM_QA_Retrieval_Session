@@ -387,7 +387,7 @@ except:
 # instantiate mlflow model
 with mlflow.start_run(run_name = config['model_id']):
 
-  model = MLflowQABot(llm, retriever, chat_prompt)
+    model = MLflowQABot(llm, retriever, chat_prompt)
   # Load the dataset and add it to the model run
     MODEL_NAME = f"{config['catalog_name']}.{config['database_name']}.{config['model_id'].replace('/','_')}"
     questions = mlflow.data.load_delta(table_name = 'eval_questions')

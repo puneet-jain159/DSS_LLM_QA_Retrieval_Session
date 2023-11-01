@@ -15,7 +15,8 @@ like_checkpoint_loc = f'{config["ui_logs"]}/like_checkpoint/{config["model_id"]}
 # COMMAND ----------
 
 # ! rm -rf {config["ui_logs"]}/qa_inferred_schema_loc/{config["model_id"]}/{config["use-case"]}
-# ! rm -rf {config["ui_logs"]}/qa_checkpoint_loc/{config["model_id"]}/{config["use-case"]}
+# !  rm -rf   {config["ui_logs"]}/qa_checkpoint/{config["model_id"]}/{config["use-case"]}
+
 
 # COMMAND ----------
 
@@ -49,7 +50,7 @@ _ =  ( bronze_likes_log.writeStream
 
 # COMMAND ----------
 
-spark.sql(f"drop table {config['use-case']}_{config['model_id'].replace('/','_').replace('-','_')}_like_logs")
+# spark.sql(f"drop table {config['use-case']}_{config['model_id'].replace('/','_').replace('-','_')}_qa_logs")
 
 # COMMAND ----------
 

@@ -18,18 +18,16 @@ if config['model_id'] == "openai":
 
 # COMMAND ----------
 
-# MAGIC %pip install vllm torch==2.0.1 safetensors==0.3.1 accelerate==0.20.3 ray[default]
+# MAGIC %pip install vllm  safetensors==0.3.1 accelerate==0.20.3 ray[default]
 
 # COMMAND ----------
 
-# import os 
+# dbutils.library.restartPython()
+
+# COMMAND ----------
+
+import os 
 nodeid = spark.conf.get('spark.databricks.driverNodeTypeId')
-if "A100" in nodeid:
-  os.environ['sharded'] = 'false'
-  os.environ['CUDA_VISIBLE_DEVICES'] = "0"
-else:
-  os.environ['sharded'] = 'true'
-  os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3"
 
 if "Llama-2" in config['model_id']: 
   os.environ['HUGGING_FACE_HUB_TOKEN'] = config['HUGGING_FACE_HUB_TOKEN']
@@ -42,14 +40,16 @@ if "load_in_8bit" in config['model_kwargs']:
   os.environ['quantize'] = "bitsandbytes"
 if config['model_id'] != 'meta-llama/Llama-2-70b-chat-hf':
   os.environ['CUDA_MEMORY_FRACTION'] = ".9"
+else:
+  os.environ['parallelize'] = "true"
 
 
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC if [ -z ${quantize} ]; 
+# MAGIC if [ -z ${parallelize} ]; 
 # MAGIC     then  python -m vllm.entrypoints.api_server --model $model_id --port 8880 --gpu-memory-utilization $CUDA_MEMORY_FRACTION ;
-# MAGIC else echo "quantize" && python -m vllm.entrypoints.api_server --model $model_id --port 8880 --gpu-memory-utilization $CUDA_MEMORY_FRACTION -q awq ;
+# MAGIC else echo "parallelize" && python -m vllm.entrypoints.api_server --model $model_id --port 8880 --gpu-memory-utilization $CUDA_MEMORY_FRACTION --tensor-parallel-size 2 ;
 # MAGIC fi
 # MAGIC
 
